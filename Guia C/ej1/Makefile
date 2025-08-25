@@ -4,7 +4,7 @@ TARGET = hola
 
 all: $(TARGET)
 
-$(TARGET): $(TARGET).o
+$(TARGET): hola.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 hola.o: hola.c
