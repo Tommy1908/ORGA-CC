@@ -5,17 +5,22 @@
 void ser_feliz(void);
 void print_estado(int estado);
 
-int main(){
+int main()
+{
     int estado = TRISTE; // automatic duration. Block scope
-    ser_feliz();
+    // ser_feliz();
     print_estado(estado); // qué imprime?
     // Imprime triste porque el cambio de estado se hace local
+    int a = 4;
+    int arr[a];
 }
 
-void ser_feliz(void){
-    estado = FELIZ;
+void ser_feliz(void)
+{
+    // estado = FELIZ;
 }
 
-void print_estado(int estado){
-    printf("Estoy %s\n", estado == FELIZ ? "feliz" : "triste");   //"operador ternario" se cumple devuleve la primera sino la seg
+void print_estado(int estado)
+{
+    printf("Estoy %s\n", estado == FELIZ ? "feliz" : "triste"); //"operador ternario" se cumple devuleve la primera sino la seg
 }
