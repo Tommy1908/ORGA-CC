@@ -1,10 +1,10 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -MMD -MP
+CFLAGS = -Wall -Wextra -pedantic
 TARGET = binario
 
 all: $(TARGET)
 
-SRCS = main.c, double_linked_list, list.c
+SRCS = main.c list.c
 OBJS = $(SRCS:.c=.o)
 
 $(TARGET): $(OBJS)
@@ -13,7 +13,7 @@ $(TARGET): $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 	
--include $(OBJS:.o=.d)
+-include £(OBJS:.o=.d)
 
 clean:
 	rm *.o $(TARGET) *.d
