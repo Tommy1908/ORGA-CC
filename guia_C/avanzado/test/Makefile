@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic
+CFLAGS = -Wall -Wextra -pedantic -MMD -MP -g
 TARGET = binario
 
 all: $(TARGET)
@@ -7,15 +7,15 @@ all: $(TARGET)
 SRCS = test.c
 OBJS = $(SRCS:.c=.o)
 
-$(TARGET): $(OBJS)
+$(TARGET) : $(OBJS)
 	$(CC) $(CFLAGS) $^ -o $@
-	
-%.o: %.c
+
+%.o: %.CC
 	$(CC) $(CFLAGS) -c $< -o $@
-	
--include £(OBJS:.o=.d)
+
+-include $(OBJS:.o=.d)
 
 clean:
 	rm *.o $(TARGET) *.d
-	
+
 .PHONY: all clean
