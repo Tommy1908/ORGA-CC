@@ -7,13 +7,16 @@ NODO_OFFSET_CATEGORIA EQU 8
 NODO_OFFSET_ARREGLO EQU 16
 NODO_OFFSET_LONGITUD EQU 24
 NODO_SIZE EQU 32
+
 PACKED_NODO_OFFSET_NEXT EQU 0
 PACKED_NODO_OFFSET_CATEGORIA EQU 8
 PACKED_NODO_OFFSET_ARREGLO EQU 9
 PACKED_NODO_OFFSET_LONGITUD EQU 17
 PACKED_NODO_SIZE EQU 21
+
 LISTA_OFFSET_HEAD EQU 0
 LISTA_SIZE EQU 8
+
 PACKED_LISTA_OFFSET_HEAD EQU 0
 PACKED_LISTA_SIZE EQU 8
 
@@ -35,9 +38,9 @@ cantidad_total_de_elementos:
 
 	XOR RAX, RAX ; Aca voy a ir acumulando la suma
 	.cicloNodos:
-	MOV RDI, [R10 + NODO_OFFSET_LONGITUD] ;RDI tiene la lon del array
+	MOV EDI, DWORD[R10 + NODO_OFFSET_LONGITUD] ;RDI tiene la lon del array
 	ADD RAX, RDI ; Sumo al contador
-	mov R10, [R10]; Apunta al next
+	mov R10, QWORD[R10]; Apunta al next
 
 	;Si next no es 0 salta
 	CMP R10, 0
@@ -51,14 +54,14 @@ cantidad_total_de_elementos_packed:
 	MOV R10, [RDI] ;Acceder al elemento del struct (puntero a head)
 
 	XOR RAX, RAX ; Aca voy a ir acumulando la suma
-	.cicloNodos:
-	MOV RDI, [R10 + PACKED_NODO_OFFSET_LONGITUD] ;RDI tiene la lon del array
+	.cicloNodosP:
+	MOV EDI, DWORD[R10 + PACKED_NODO_OFFSET_LONGITUD] ;RDI tiene la lon del array
 	ADD RAX, RDI ; Sumo al contador
 	mov R10, [R10]; Apunta al next
 
 	;Si next no es 0 salta
 	CMP R10, 0
-	JNE .cicloNodos
+	JNE .cicloNodosP
 
 	ret
 
