@@ -1,0 +1,45 @@
+File helper.c:
+3:	void encode(char *, char *);
+9:	void print_authentication_message(int);
+
+>>> bt
+#0  print_authentication_message (miss=1) at helper.c:10
+#1  0x00005555555552e5 in do_some_more_stuff ()
+#2  0x000055555555534e in do_some_stuff ()
+#3  0x0000555555555487 in main ()
+
+>>> info args
+miss = 1
+
+Stack level 0, frame at 0x7fffffffdbe0:
+ rip = 0x555555555512 in print_authentication_message (helper.c:10); saved rip = 0x5555555552e5
+ called by frame at 0x7fffffffdc10
+ source language c.
+ Arglist at 0x7fffffffdbd0, args: miss=1
+ Locals at 0x7fffffffdbd0, Previous frame's sp is 0x7fffffffdbe0
+ Saved registers:
+  rbp at 0x7fffffffdbd0, rip at 0x7fffffffdbd8
+
+
+ESTABA en el rax de do_some_more_stuff
+
+>>> x/s $rax
+
+0x555555559330:	"clave_192.168.0.99"
+>>> bt
+
+#0  0x00005555555552b1 in do_some_more_stuff ()
+#1  0x000055555555534e in do_some_stuff ()
+#2  0x0000555555555487 in main ()
+>>> info frame
+
+Stack level 0, frame at 0x7fffffffdc00:
+ rip = 0x5555555552b1 in do_some_more_stuff; saved rip = 0x55555555534e
+ called by frame at 0x7fffffffdc30
+ Arglist at 0x7fffffffdbf0, args: 
+ Locals at 0x7fffffffdbf0, Previous frame's sp is 0x7fffffffdc00
+ Saved registers:
+  rbp at 0x7fffffffdbf0, rip at 0x7fffffffdbf8
+
+No pude encontrarlo en el stack
+
