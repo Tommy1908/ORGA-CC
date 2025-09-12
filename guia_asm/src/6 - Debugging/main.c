@@ -7,6 +7,9 @@
 #include "../test-utils.h"
 #include "Debugging.h"
 
-int main(int argc, char* argv[]) {
-	
+int main(int argc, char *argv[])
+{
+
+    uint64_t x = ejercicio1(1, 1, 2, 3, 4);
+    printf("%d", x);
 }
