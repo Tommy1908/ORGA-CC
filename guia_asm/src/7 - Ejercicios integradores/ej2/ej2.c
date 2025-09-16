@@ -59,7 +59,7 @@ void optimizar(mapa_t mapa, attackunit_t *compartida, uint32_t (*fun_hash)(attac
             if (hashCompartida == hashIJ)
             {
                 mapa[i][j] = compartida;
-                compartida->references++;
+                compartida->references ++;
                 if (unitIJ->references == 1)
                 {
                     free(unitIJ);
@@ -68,6 +68,8 @@ void optimizar(mapa_t mapa, attackunit_t *compartida, uint32_t (*fun_hash)(attac
                 {
                     unitIJ->references--;
                 }
+                //Puede ser que otra clase ya optimizada, entonces se dan estas situaciones
+                //Me pregunto si se quisiera usar encerio como se correria? con cada attackunit?
             }
         }
     }
