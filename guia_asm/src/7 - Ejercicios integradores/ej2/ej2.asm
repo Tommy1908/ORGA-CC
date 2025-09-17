@@ -1,4 +1,5 @@
 extern malloc
+extern free
 
 section .rodata
 ; Acá se pueden poner todas las máscaras y datos que necesiten para el ejercicio
@@ -103,7 +104,21 @@ optimizar:
 		jne .siguenteJ
 		;OPTIMIZAR!!
 		mov [R12 + R10 * SIZE_OF_PUNTERO], R13 ;mapa[i][j] = compartida;
-		inc QWORD [R13 + ATTACKUNIT_REFERENCES] ;compartida->references ++;
+		inc BYTE [R13 + ATTACKUNIT_REFERENCES] ;compartida->references ++;
+
+		;ahora ver si liberamos o no
+		mov AL, [RDI + ATTACKUNIT_REFERENCES] ;attackreferences de unitIJ
+		cmp AL,1 
+		je .borrarIJ
+		;sino restamos una referencia
+		dec byte[RDI + ATTACKUNIT_REFERENCES]
+		jmp .siguenteJ
+
+		.borrarIJ:
+		;en rdi esta unit ij
+		call free
+
+
 
 	.siguenteJ:
 	inc QWORD [rbp - 40]
@@ -232,8 +247,8 @@ modificarUnidad:
 	;
 
 	;Ver la cantidad de referencias, si es 1 MODIFICAR y fin
-	mov R8, [R12 + ATTACKUNIT_REFERENCES]
-	cmp R8, 1
+	mov AL, [R12 + ATTACKUNIT_REFERENCES]
+	cmp AL, 1
 
 	JE .finModif1unit
 	;
