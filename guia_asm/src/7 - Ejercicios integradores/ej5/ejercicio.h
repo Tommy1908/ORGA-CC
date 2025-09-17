@@ -25,11 +25,11 @@
  * Posee un nombre, una cantidad de puntos de vida y un dueño.
  */
 typedef struct carta {
-	bool en_juego;    // asmdef_offset:carta.en_juego
-	char nombre[12];  // asmdef_offset:carta.nombre
-	uint16_t vida;    // asmdef_offset:carta.vida
-	uint8_t jugador;  // asmdef_offset:carta.jugador
-} carta_t;  // asmdef_size:carta.SIZE
+	bool en_juego;    // asmdef_offset:0
+	char nombre[12];  // asmdef_offset:1
+	uint16_t vida;    // asmdef_offset:14
+	uint8_t jugador;  // asmdef_offset:16
+} carta_t;  // asmdef_size:18
 
 /**
  * Una instancia del juego en proceso.
@@ -37,10 +37,10 @@ typedef struct carta {
  * Posee las manos de ambos jugadores humanos y el campo de juego
  */
 typedef struct tablero {
-	carta_t* mano_jugador_rojo;               // asmdef_offset:tablero.mano_jugador_rojo
-	carta_t* mano_jugador_azul;               // asmdef_offset:tablero.mano_jugador_azul
-	carta_t* campo[ALTO_CAMPO][ANCHO_CAMPO];  // asmdef_offset:tablero.campo
-} tablero_t;  // asmdef_size:tablero.SIZE
+	carta_t* mano_jugador_rojo;               // asmdef_offset:0
+	carta_t* mano_jugador_azul;               // asmdef_offset:8
+	carta_t* campo[ALTO_CAMPO][ANCHO_CAMPO];  // asmdef_offset:16
+} tablero_t;  // asmdef_size:416
 
 /**
  * La implementación de una acción del juego.
@@ -57,10 +57,10 @@ typedef void accion_fn_t(tablero_t* tablero, carta_t* carta);
  * acción que sigue luego de ésta
  */
 typedef struct accion {
-	accion_fn_t* invocar;      // asmdef_offset:accion.invocar
-	carta_t* destino;          // asmdef_offset:accion.destino
-	struct accion* siguiente;  // asmdef_offset:accion.siguiente
-} accion_t;  // asmdef_size:accion.SIZE
+	accion_fn_t* invocar;      // asmdef_offset:0
+	carta_t* destino;          // asmdef_offset:8
+	struct accion* siguiente;  // asmdef_offset:16
+} accion_t;  // asmdef_size:24
 
 /**
  * Dada una secuencia de acciones determinar si hay alguna cuya carta tenga un

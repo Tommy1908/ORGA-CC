@@ -38,7 +38,17 @@ bool EJERCICIO_3_HECHO = true;
  *   - Cualquier otro valor es `true`
  */
 bool hay_accion_que_toque(accion_t* accion, char* nombre) {
-	return false;
+	if(accion == 0){
+		return false;
+	}
+	if(strncmp(accion->destino->nombre, nombre, 12) == 0){
+		return true;
+	}
+	accion_t* sig = accion->siguiente;
+	if(sig == 0){
+		return false;
+	}
+	return hay_accion_que_toque(sig, nombre);
 }
 
 /**
@@ -63,6 +73,21 @@ bool hay_accion_que_toque(accion_t* accion, char* nombre) {
  * orden de ejecución.
  */
 void invocar_acciones(accion_t* accion, tablero_t* tablero) {
+
+	if(accion == 0){
+		return;
+	}
+
+	if(accion->destino->en_juego == 1){
+		accion->invocar(tablero, accion->destino);
+
+		if(accion->destino->vida <= 0){
+			accion->destino->en_juego = 0;
+		}
+	}
+
+	invocar_acciones(accion->siguiente, tablero);
+	return;
 }
 
 /**
@@ -84,4 +109,19 @@ void invocar_acciones(accion_t* accion, tablero_t* tablero) {
  */
 void contar_cartas(tablero_t* tablero, uint32_t* cant_rojas, uint32_t* cant_azules) {
 	*cant_rojas = *cant_azules = 0;
+
+	for(uint16_t i = 0; i < ALTO_CAMPO; i++){
+		for(uint16_t j = 0; j < ANCHO_CAMPO; j++){
+			if(tablero->campo[i][j] != 0){
+				uint8_t jugador = tablero->campo[i][j]->jugador;
+				if(jugador == JUGADOR_ROJO){
+					*cant_rojas = *cant_rojas + 1;
+				}
+				else if(jugador == JUGADOR_AZUL){
+					*cant_azules = *cant_azules + 1;
+				}
+			}
+		}
+	}
+	return;
 }
