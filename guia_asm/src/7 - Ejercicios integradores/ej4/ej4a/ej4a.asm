@@ -94,7 +94,7 @@ summon_fantastruco:
 	push RBP
 	mov RBP, RSP
 	push R12
-	sub RBP, 8
+	sub RSP, 8
 	;;;;;;;;;;;;; fin prolog
 
 	mov RDI, FANTASTRUCO_SIZE
@@ -110,7 +110,7 @@ summon_fantastruco:
 	mov RAX, R12 ;podria haber cambiado el rax, y no devuelve el init_fantastruco_dir
 
 	;;;;;;;;;;;;; epilogo
-	add RBP, 8
+	add RSP, 8
 	pop R12
 	pop RBP
 	ret ;No te olvides el ret!
