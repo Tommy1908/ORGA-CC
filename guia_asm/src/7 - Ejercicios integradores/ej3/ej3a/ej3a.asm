@@ -31,257 +31,220 @@ ESTADISTICAS_ESTADO1_OFFSET EQU 5
 ESTADISTICAS_ESTADO2_OFFSET EQU 6
 ESTADISTICAS_SIZE EQU 7
 
-SIZE_OF_INT EQU 4
-
 ;segmentacion_t* segmentar_casos(caso_t* arreglo_casos, int largo)
+
 global segmentar_casos
 segmentar_casos:
 push RBP
 mov RBP, RSP
-push R12 ;array casos
-push R13 ;largo
-push R14 ;contadores
-push R15 ;segment
-sub RSP, 32;    [RSP - 40] a [RSP -56] va a ser para los arrays
-;;Guardar parametros de entrada
-mov R12, RDI ;ARREGLO CASOS
-mov R13D, ESI ;LARGO
+push RBX
+push R12
+push R13
+push R14
+push R15
+sub RSP, 40  ;rbp - 48; rbp - 56; rbp -64; rbp - 72; rbp -80
+;Prologo
+mov RBX, RDI ; ARREGLO CASOS
+xor R12,R12
+mov R12D, ESI; largo
 
-;Conseguir contadores
-mov QWORD RDI, 3
-imul QWORD RDI, SIZE_OF_INT
-
+;reservar contadores
+mov QWORD RDI, 96
 call malloc
-mov R14, RAX ; Contadores
-mov QWORD[R14 + 0 * SIZE_OF_INT], 0
-mov QWORD[R14 + 1 * SIZE_OF_INT], 0
-mov QWORD[R14 + 2 * SIZE_OF_INT], 0
-;
-;Paparar datos para contar casos
-mov RDI, R12
-mov ESI, R13D
-mov RDX, RAX 
+mov R13, RAX ;contadores
+;los limpiamos
+mov DWORD[R13], 0 ;(recordar los hicimos de 32 bits)
+mov DWORD[R13 + 4], 0
+mov DWORD[R13 + 8], 0
+mov RDI, RBX
+mov ESI, R12D
+mov RDX, R13 ;preparo para llamar la funcion
+call contar_casos_por_nivel
+;;
 
-call contar_casos_por_nivel ; como yo la hice se que solo toque de R8-R11 (igual guarde todo)
-;;;;;;;;;;;;;
+;ahora hay que crear los c0,c1,c2
+mov dword[rbp - 48], R12D ;LARGO
+mov R12, R13; ahora aca esta contadores
+;creo los c" en null
+mov R13, 0
+mov R14, 0
+mov R15, 0
 
-;Crear las segmentaciones
-mov QWORD RDI,SEGMENTACION_SIZE
-call malloc
-mov R15, RAX ; segmentacion
+    cmp DWORD[R12], 0
+    je .skip1
+    xor RDI, RDI
+    mov EDI, DWORD[R12]
+    imul RDI, CASO_SIZE
+    call malloc
+    mov R13, RAX
 
+.skip1:
+    cmp DWORD[R12 + 4], 0
+    je .skip2
+    xor RDI, RDI
+    mov EDI, DWORD[R12+ 4]
+    imul RDI, CASO_SIZE
+    call malloc
+    mov R14, RAX
 
-;ahora ver si quedan null o reservar memoria
-mov R11, [R14 + 0 *SIZE_OF_INT]
-cmp R11, 0
-je .c0is0
-mov RDI, R11
-imul QWORD RDI, CASO_SIZE
-call malloc
-mov [RSP - 40], RAX
-
-.c0is0:
-mov R11, [R14 + 1 *SIZE_OF_INT]
-cmp R11, 0
-jne .c1is0
-mov RDI, R11
-imul QWORD RDI, CASO_SIZE
-call malloc
-mov [RSP - 48], RAX
-
-.c1is0:
-mov R11, [R14 + 2 *SIZE_OF_INT]
-cmp R11, 0
-jne .c2is0
-mov RDI, R11
-imul QWORD RDI, CASO_SIZE
-call malloc
-mov [RSP - 56], RAX
-
-.c2is0:
-;;Guardar en el struct los arrays (punteros)
-mov R8, [RSP - 40]
-mov [R15 + SEGMENTACION_CASOS0_OFFSET], R8
-mov R8, [RSP - 48]
-mov [R15 + SEGMENTACION_CASOS1_OFFSET], R8
-mov R8, [RSP - 56]
-mov [R15 + SEGMENTACION_CASOS2_OFFSET], R8
-
-;vamos a reutilizar esa memoria
-mov QWORD[RSP - 40], 0 ;contador para casos 0
-mov QWORD[RSP - 48], 0 ;contador para casos 1
-mov QWORD[RSP - 56], 0 ;contador para casos 2
+.skip2:
+    cmp DWORD[R12 + 8], 0
+    je .skip3
+    xor RDI, RDI
+    mov EDI, DWORD[R12 + 8]
+    imul RDI, CASO_SIZE
+    call malloc
+    mov R15, RAX
+.skip3:
+;;;;;;;;;;;;;;;;;;;;;;
+;ahora crear los iteradores de cada c y el del ciclo
+mov QWORD[rbp - 56], 0  ; era para i, igual creo que no hace falta
+mov QWORD[rbp - 64], 0  ;i0
+mov QWORD[rbp - 72], 0  ;i1
+mov QWORD[rbp - 80], 0  ;i2
 
 
-;;;Ahora poner los casos
-xor R8,R8 ; iterador
-.cicloArreglo:
-    cmp R8D, R13D
-    je .finSegmentar
+;;;;;Iterador en base a nivel (el que usea antes asi que lo adapto)
+xor R8,R8
+mov R8, [rbp - 56]
+mov RDI, RBX
+mov ESI, dword[rbp - 48]
+.ciclo_meter_casos:
+    
+    cmp R8D, ESI ;Largo en ESI
+    je .fin_ciclo
+    imul RCX, R8, CASO_SIZE
+    lea R9, [RDI + RCX] ;puntero a case 
+    mov R10, [R9 + CASO_USUARIO_OFFSET] ;(puntero usuario)
+    mov R10D, DWORD [R10 + USUARIO_NIVEL_OFFSET]
+    cmp R10, 0
+    je .nivel0
+    cmp R10, 1
+    je .nivel1
+    cmp R10, 2
+    je .nivel2
 
-    ;Acceder a nivel
-    imul R9, R8, CASO_SIZE ; NO PUEDE SER ESCALAR DE 16 EN DIRECCIONAMIENTO
-    lea R9, [R12+ R9] ;array de casos + i * Caso size   ES EL CASO
+;----------------- NIVEL 0 -----------------
+.nivel0:
+    mov R11, [rbp - 64]        ; i0
+    imul R11, R11, CASO_SIZE   ; offset en bytes dentro de c0
+    ; categoria
+    mov R10D, [R9 + CASO_CATEGORIA_OFFSET]
+    mov [R13 + R11 + CASO_CATEGORIA_OFFSET], R10D
+    ; estado
+    mov R10D, [R9 + CASO_ESTADO_OFFSET]
+    mov [R13 + R11 + CASO_ESTADO_OFFSET], R10D
+    ; puntero a usuario
     mov R10, [R9 + CASO_USUARIO_OFFSET]
-    mov R11D, DWORD[R10 + USUARIO_NIVEL_OFFSET]; Nivel
+    mov [R13 + R11 + CASO_USUARIO_OFFSET], R10
+    ; incrementar i0
+    inc DWORD [rbp - 64]
+    jmp .sig_contar
+
+;----------------- NIVEL 1 -----------------
+.nivel1:
+    mov R11, [rbp - 72]        ; i1
+    imul R11, R11, CASO_SIZE   ; offset en bytes dentro de c1
+    ; categoria
+    mov R10D, [R9 + CASO_CATEGORIA_OFFSET]
+    mov [R14 + R11 + CASO_CATEGORIA_OFFSET], R10D
+    ; estado
+    mov R10D, [R9 + CASO_ESTADO_OFFSET]
+    mov [R14 + R11 + CASO_ESTADO_OFFSET], R10D
+    ; puntero a usuario
+    mov R10, [R9 + CASO_USUARIO_OFFSET]
+    mov [R14 + R11 + CASO_USUARIO_OFFSET], R10
+    ; incrementar i1
+    inc DWORD [rbp - 72]
+    jmp .sig_contar
+
+;----------------- NIVEL 2 -----------------
+.nivel2:
+    mov R11, [rbp - 80]        ; i2
+    imul R11, R11, CASO_SIZE   ; offset en bytes dentro de c2
+    ; categoria
+    mov R10D, [R9 + CASO_CATEGORIA_OFFSET]
+    mov [R15 + R11 + CASO_CATEGORIA_OFFSET], R10D
+    ; estado
+    mov R10D, [R9 + CASO_ESTADO_OFFSET]
+    mov [R15 + R11 + CASO_ESTADO_OFFSET], R10D
+    ; puntero a usuario
+    mov R10, [R9 + CASO_USUARIO_OFFSET]
+    mov [R15 + R11 + CASO_USUARIO_OFFSET], R10
+    ; incrementar i2
+    inc DWORD [rbp - 80]
+    jmp .sig_contar
 
 
-    cmp R11, 0
-    je .nivel0copy
-    cmp R11, 1
-    je .nivel1copy
-    cmp R11, 2
-    je .nivel2copy
+    .sig_contar:
+    inc R8W
+    jmp .ciclo_meter_casos
 
+.fin_ciclo:
 
-    .nivel0copy:
-    ; Verificar si el array de nivel 0 existe
-    mov RAX, [R15 + SEGMENTACION_CASOS0_OFFSET]
-    test RAX, RAX
-    jz .cicloArregloPrep    ; Saltar si es NULL
+    ;libero contadores
+    mov RDI, R12
+    call free
 
-    ; Calcular dirección destino
-    mov RDI, [RSP - 40]            ; Contador caso 0
-    imul RDI, CASO_SIZE
-    add RAX, RDI            ; RAX = dirección destino
+    ;crear la segmentacion y ponerle los arrays
+    mov QWORD RDI, SEGMENTACION_SIZE
+    call malloc
+    mov [RAX + SEGMENTACION_CASOS0_OFFSET], R13
+    mov [RAX + SEGMENTACION_CASOS1_OFFSET], R14
+    mov [RAX + SEGMENTACION_CASOS2_OFFSET], R15
+;En rax ya esta lo que queremos devolver
 
-    ; Copiar la categoría (3 bytes) - método seguro
-    mov ESI, DWORD[R9] ;esto seria el array de char
-    mov [RAX], ESI
-
-    ; Copiar el estado (2 bytes)
-    mov dx, WORD [R9 + CASO_ESTADO_OFFSET]
-    mov [RAX + CASO_ESTADO_OFFSET], dx
-
-    ; Copiar el puntero al usuario (8 bytes)
-    mov RCX, [R9 + CASO_USUARIO_OFFSET]
-    mov [RAX + CASO_USUARIO_OFFSET], RCX
-
-    ; Incrementar contador de casos nivel 0
-    inc QWORD[RSP - 40] 
-    jmp .cicloArregloPrep
-
-    .nivel1copy:
-    ; Verificar si el array de nivel 0 existe
-    mov RAX, [R15 + SEGMENTACION_CASOS0_OFFSET]
-    test RAX, RAX
-    jz .cicloArregloPrep    ; Saltar si es NULL
-
-    ; Calcular dirección destino
-    mov RDI, [RSP - 48]            ; Contador caso 0
-    imul RDI, CASO_SIZE
-    add RAX, RDI            ; RAX = dirección destino
-
-    ; Copiar la categoría (3 bytes) - método seguro
-    mov ESI, DWORD[R9] ;esto seria el array de char
-    mov [RAX], ESI
-
-    ; Copiar el estado (2 bytes)
-    mov dx, WORD [R9 + CASO_ESTADO_OFFSET]
-    mov [RAX + CASO_ESTADO_OFFSET], dx
-
-    ; Copiar el puntero al usuario (8 bytes)
-    mov RCX, [R9 + CASO_USUARIO_OFFSET]
-    mov [RAX + CASO_USUARIO_OFFSET], RCX
-
-    ; Incrementar contador de casos nivel 0
-    inc QWORD[RSP - 48] 
-    jmp .cicloArregloPrep
-
-    .nivel2copy:
-    ; Verificar si el array de nivel 0 existe
-    mov RAX, [R15 + SEGMENTACION_CASOS0_OFFSET]
-    test RAX, RAX
-    jz .cicloArregloPrep    ; Saltar si es NULL
-
-    ; Calcular dirección destino
-    mov RDI, [RSP - 56]            ; Contador caso 0
-    imul RDI, CASO_SIZE
-    add RAX, RDI            ; RAX = dirección destino
-
-    ; Copiar la categoría (3 bytes) - método seguro
-    mov ESI, DWORD[R9] ;esto seria el array de char
-    mov [RAX], ESI
-
-    ; Copiar el estado (2 bytes)
-    mov dx, WORD [R9 + CASO_ESTADO_OFFSET]
-    mov [RAX + CASO_ESTADO_OFFSET], dx
-
-    ; Copiar el puntero al usuario (8 bytes)
-    mov RCX, [R9 + CASO_USUARIO_OFFSET]
-    mov [RAX + CASO_USUARIO_OFFSET], RCX
-
-    ; Incrementar contador de casos nivel 0
-    inc QWORD[RSP - 56] 
-    jmp .cicloArregloPrep
-
-    .cicloArregloPrep:
-    inc R8D
-    jmp .cicloArreglo
-
-.finSegmentar: 
-
-;;Por ultimo free contadores
-mov RDI, R14
-call free
-
-mov RAX, R15
-
-;Epilogo
-add RSP, 32
+add RSP, 40
 pop R15
 pop R14
 pop R13
 pop R12
+pop RBX
 pop RBP
 ret
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-global contar_casos_por_nivel
 contar_casos_por_nivel:
-;RDI arreglo casos
-;ESI largo
-;RDX contador
+;RDI -> caso_t* ARREGLO CASOS 
+;ESI -> int LARGO
+;RDX -> int * Contadores
 
 push RBP
 mov RBP, RSP
+;Prologo
 
-xor R8,R8 ;iterador
-.cicloCasos:
-    cmp R8D, ESI
-    je .fin_contar_casos_por_nivel
+;;;;;Iterador en base a nivel
+xor R8,R8
+xor R10,R10
+.ciclo_contar_casos:
+    cmp R8D, ESI ;Largo en ESI
+    je .Epilogo_contar_casos
+    imul RCX, R8, CASO_SIZE
+    lea R9, [RDI + RCX] ;puntero a case 
+    mov R10, [R9 + CASO_USUARIO_OFFSET] ;(puntero usuario)
+    mov R10D, DWORD [R10 + USUARIO_NIVEL_OFFSET]
+    cmp R10D, 0
+    je .nivel0_contar
+    cmp R10D, 1
+    je .nivel1_contar
+    cmp R10D, 2
+    je .nivel2_contar
+    jmp .sig_contar ;SI, PUEDE HABER NIVEL 3
 
-    imul R9, R8, CASO_SIZE ; NO PUEDE SER ESCALAR DE 16 EN DIRECCIONAMIENTO
-    lea R9, [RDI+ R9] ;RDI + i * Caso size
-    mov R10, [R9 + CASO_USUARIO_OFFSET]
-    mov R11D, DWORD[R10 + USUARIO_NIVEL_OFFSET]
-
-    cmp R11D, 0
-    je .cc0
-    cmp R11D, 1
-    je .cc1
-    cmp R11D, 2
-    je .cc2
-
-
-    .cc0:
-    inc DWORD [RDX]
-    jmp .cicloCasosPrep
-
-    .cc1:
+    .nivel0_contar:
+    inc DWORD [RDX + 0]
+    jmp .sig_contar
+    .nivel1_contar:
     inc DWORD [RDX + 4]
-    jmp .cicloCasosPrep
-
-    .cc2:
+    jmp .sig_contar
+    .nivel2_contar:
     inc DWORD [RDX + 8]
-    jmp .cicloCasosPrep
 
-    .cicloCasosPrep:
+    .sig_contar:
     inc R8D
-    jmp .cicloCasos
+    jmp .ciclo_contar_casos
 
-    .fin_contar_casos_por_nivel:
 
+.Epilogo_contar_casos:
 pop RBP
 ret
